@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+  laramysql:
+    hostname: LARADB
+    image: 'bitnami/mysql:5.7'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_USER=my_user
+      - MYSQL_DATABASE=my_database
+      - MYSQL_PASSWORD=my_password
+    volumes:
+      - ./container/mysqldb:/bitnami/mysql/data
+      - ./conf/mysql/conf.d/my.cnf:/opt/bitnami/mysql/conf/my.cnf
+    ports:
+      - 6606:3306
+    networks:
+      - dev_network
+
+  laraapp:
+    hostname: LARAAPP
+    tty: true
+    image: docker.io/bitnami/laravel:7-debian-10
+    environment:
+      - DB_HOST=laramysql
+      - DB_USERNAME=my_user
+      - DB_DATABASE=my_database
+      - DB_PASSWORD=my_password
+    depends_on:
+      - laramysql
+    ports:
+      - 3000:3000
+    volumes:
+      - ../app/:/app
+    networks:
+      - dev_network
+    # privileged: true # Privileged mode could be required to run this container under Windows
+
+networks:
+  dev_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.11.0.0/16
